@@ -7,9 +7,16 @@ import websockets
 import ssl
 import asyncio
 import json
-from .resources import reqs, processing
-from .resources.control import *
-from .resources.variables import log
+
+try:
+    from .resources import reqs, processing
+    from .resources.control import *
+    from .resources.variables import log
+
+except ImportError:
+    from resources import reqs, processing
+    from resources.control import *
+    from resources.variables import log
 
 
 def run(function):
