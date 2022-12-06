@@ -143,8 +143,6 @@ async def send(streamID, data, user_header: dict = None):
         'utf-8') if len(user_header) > 0 else bytes())
 
     user_header_len = len(user_header_bytes)
-    print("hello")
-    print(type(user_header_len.to_bytes(2, 'little')))
     pkt = memoryview(user_header_len.to_bytes(2, 'little')
                      + data_len.to_bytes(2, 'little')
                      + streamID.to_bytes(4, 'little')
