@@ -27,9 +27,9 @@ def run(function):
         print("Closing down Corelink...")
     except KeyboardInterrupt:
         print("Closing from keyboard interrupt.")
-    finally:
-        if variables.is_open:
-            variables.loop.run_until_complete(_exit())
+    # finally:
+    #     if variables.is_open:
+    #         variables.loop.run_until_complete(_exit())
 
 async def keep_open():
     """Called by user to ensure that the program stays open while awaiting data."""
