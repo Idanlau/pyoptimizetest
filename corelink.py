@@ -137,12 +137,23 @@ async def send(streamID, data, user_header: dict = None):
     data should be either str or bytes.
     """
     stream = variables.streams[streamID] # for convenience
-    user_h = json.dumps(user_header) if user_header else ""
+    data_len = len(data)
 
-    header = len(user_h) + (len(data) << 16) + (int(streamID) << 32)
-    message = int.to_bytes(header, 8, 'little') + user_h.encode() + data.encode()
+    user_header_bytes = (json.dumps(user_header).encode(
+        'utf-8') if len(user_header) > 0 else bytes())
+
+    user_header_len = len(user_header_bytes)
+
+    pkt = memoryview(user_header_len.to_bytes(2, 'little')
+                     + data_len.to_bytes(2, 'little')
+                     + streamID.to_bytes(4, 'little')
+                     + user_header_bytes
+                     + data if data_len > 0 else bytes())
+
+    message = pkt
 
     log(message)
+
     if stream['protocol'] == 'ws':
         asyncio.create_task(stream['connection'].send(message))
         log("[ws] data sent")
