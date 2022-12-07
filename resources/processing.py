@@ -43,28 +43,31 @@ async def connect_sender(streamID):
                                                         ssl=ssl.SSLContext(ssl.PROTOCOL_TLS))
         variables.log('connected WS sender.')
 
+
 async def connect_receiver(streamID):
     """Connects receiver in order to send data."""
     receiver = variables.receiver[streamID]  # for convenience
     variables.log(receiver)
 
-    header = (int(streamID) << 32)
-
-    by_header = int.to_bytes(header, 8, 'little')
-    variables.log(by_header)
+    header = [0, 0, 0, 0, 0, 0, 0, 0]
+    header = bytearray(header)
+    head = memoryview(header)
+    head[4:6] = int.to_bytes(int(streamID), 2, 'little')
+    header = bytes(header)
+    variables.log(header)
 
     if receiver['proto'] == 'tcp':
-        receiver['connection'] = await variables.loop.create_connection(lambda: Proto(by_header, 'tcp', int(receiver['port'])),
-                                                                        variables.host, int(receiver['port']))
+        receiver['connection'] = await variables.loop.create_connection(lambda: Proto(header, 'tcp', int(receiver['port'])),
+                                                                    variables.host, int(receiver['port']))
     elif receiver['proto'] == 'udp':
-        receiver['connection'] = await variables.loop.create_datagram_endpoint(lambda: Proto(by_header, 'udp', int(receiver['port'])),
-                                                                               remote_addr=(
-                                                                                   variables.host, int(receiver['port'])))
+        receiver['connection'] = await variables.loop.create_datagram_endpoint(lambda: Proto(header, 'udp', int(receiver['port'])),
+                                                                        remote_addr=(variables.host, int(receiver['port'])))
     elif receiver['proto'] == 'ws':
         receiver['connection'] = await websockets.connect(f"wss://{variables.host}:{receiver['port']}",
-                                                          ssl=ssl.SSLContext(ssl.PROTOCOL_TLS))
-        await receiver['connection'].send(by_header)
+                                    ssl=ssl.SSLContext(ssl.PROTOCOL_TLS))
+        await receiver['connection'].send(header)
         variables.receiver_task = asyncio.create_task(ws_receiver(receiver))
+
 
 async def maintain():
     while not variables.shut_down:
